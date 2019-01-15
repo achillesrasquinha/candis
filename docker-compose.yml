@@ -1,0 +1,40 @@
+version: "3.4"
+
+x-defaults: &defaults
+  restart: unless-stopped
+
+services:
+  app:
+    <<: *defaults
+    build: .
+    # environment:
+    #   - 
+    networks:
+      - db
+      - cache
+      - proxy
+  db:
+    <<: *defaults
+    image: postgres
+    networks:
+      - db
+  cache:
+    <<: *defaults
+    image: redis
+    networks:
+      - cache
+  proxy:
+    <<: *defaults
+    image: nginx
+    ports:
+      - "4000:80"
+    networks:
+      - proxy
+  
+networks:
+  db:
+    driver: bridge
+  cache:
+    driver: bridge
+  proxy:
+    driver: bridge
