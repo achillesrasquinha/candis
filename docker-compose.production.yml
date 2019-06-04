@@ -8,7 +8,7 @@ services:
     <<: *defaults
     build:
       context: .
-      dockerfile: ./docker/development/web/Dockerfile
+      dockerfile: ./docker/production/web/Dockerfile
     networks:
       - db
       - cache
@@ -16,10 +16,8 @@ services:
       - .:/app
     depends_on:
       - db
-    ports:
-      - "5001:5000"
-      - "8888:8888"
-    command: /start
+      - cache
+      - proxy
 
   db:
     <<: *defaults
@@ -29,10 +27,10 @@ services:
     networks:
       - db
     volumes:
-      - development_db_data:/var/lib/db/data
-      - development_db_backups:/backups
+      - production_db_data:/var/lib/db/data
+      - production_db_backups:/backups
     env_file:
-      - ./.envs/.development/.db
+      - ./.envs/.production/.db
   
   cache:
     <<: *defaults
@@ -42,7 +40,19 @@ services:
     networks:
       - cache
     env_file:
-      - ./.envs/.development/.cache
+      - ./.envs/.production/.cache
+
+  proxy:
+    <<: *defaults
+    build:
+      context: .
+      dockerfile: ./docker/production/proxy/Dockerfile
+    networks:
+      - proxy
+    depends_on:
+      - app
+    ports:
+      - "80:80"
 
 networks:
   db:
@@ -51,7 +61,9 @@ networks:
     driver: bridge
   web:
     driver: bridge
+  proxy:
+    driver: bridge
 
 volumes:
-  development_db_data: { }
-  development_db_backups: { }
+  production_db_data: { }
+  production_db_backups: { }

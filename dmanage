@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -e
+
+basedir="$(dirname "${0}")"
+
+if [[ "${CC_ENVIRONMENT}" == "development" ]]; then
+	filepath="${basedir}/docker-compose.production.yml"
+else
+	filepath="${basedir}/docker-compose.yml"
+fi
+
+case "$1" in
+	web|db)
+		docker-compose -f "${filepath}" exec "$@"
+		exit
+	;;
+esac
+
+docker-compose -f "${filepath}" "$@"

@@ -1,33 +1,59 @@
 language: python
+
 python:
-  # - "3.2" # coverage seems to fail.
-  # - "3.3" # seaborn is incompatible.
-  # - "3.4" # hangs on pipenv install
-  - "3.5" 
-  # - "3.5-dev"
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
   - "3.6"
-  # - "3.6-dev"
-  # - "3.7-dev"
+  - "3.7-dev"
 
-sudo: required
-
-dist: xenial        
-        
-services:
-    - docker
+env:
+  global:
+    - ENVIRONMENT=test
+    - VERBOSE=true
 
 install:
-    - docker-compose build
-    - docker-compose up -d
-    - docker-compose exec app sh -c "apt-get update && apt-get install -y netcat"
-    - docker-compose exec proxy sh -c "apt-get update && apt-get install -y curl"
+  - sudo $TRAVIS_BUILD_DIR/ci/scripts/install.sh
+  - VENVDIR=$VIRTUAL_ENV make install
 
 script:
-    - docker-compose exec app sh -c "nc -vz cache 6379"
-    - docker-compose exec app sh -c "nc -vz db 5432"
-    - docker-compose exec app sh -c "nc -vz proxy 80"
-    - docker-compose exec proxy sh -c "curl localhost/api/ping"  
+  - VENVDIR=$VIRTUAL_ENV make test
 
-after_script:
-    - docker-compose stop
-    - docker-compose rm -f         
+after_success:
+  - VENVDIR=$VIRTUAL_ENV make coverage
+  - npx semantic-release
+
+# language: python
+# python:
+#   # - "3.2" # coverage seems to fail.
+#   # - "3.3" # seaborn is incompatible.
+#   # - "3.4" # hangs on pipenv install
+#   - "3.5" 
+#   # - "3.5-dev"
+#   - "3.6"
+#   # - "3.6-dev"
+#   # - "3.7-dev"
+
+# sudo: required
+
+# dist: xenial        
+        
+# services:
+#     - docker
+
+# install:
+#     - docker-compose build
+#     - docker-compose up -d
+#     - docker-compose exec app sh -c "apt-get update && apt-get install -y netcat"
+#     - docker-compose exec proxy sh -c "apt-get update && apt-get install -y curl"
+
+# script:
+#     - docker-compose exec app sh -c "nc -vz cache 6379"
+#     - docker-compose exec app sh -c "nc -vz db 5432"
+#     - docker-compose exec app sh -c "nc -vz proxy 80"
+#     - docker-compose exec proxy sh -c "curl localhost/api/ping"  
+
+# after_script:
+#     - docker-compose stop
+#     - docker-compose rm -f

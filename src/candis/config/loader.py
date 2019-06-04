@@ -38,13 +38,13 @@ class Loader(object):
         data     = dict()
 
         with open(Loader.DEFAULT_CONFIG) as f:
-            data = yaml.load(f)
+            data = yaml.load(f, Loader = yaml.FullLoader)
 
         config   = Config(data)
 
         if filename and os.path.isfile(filename):
             with open(filename) as f:
-                data = yaml.load(f)
+                data = yaml.load(f, Loader = yaml.FullLoader)
 
                 config.update(data)
 

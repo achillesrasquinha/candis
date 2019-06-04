@@ -1,10 +1,5 @@
+include requirements*.txt
 include README.md
 include LICENSE
 
-recursive-include candis *.yml
-recursive-include candis *.json
-
-recursive-include candis *.html
-recursive-include candis *.css
-recursive-include candis *.js
-recursive-include candis *.png
+graft   src

@@ -1,92 +1,92 @@
-# inspired by npm's package.json
-# imports - standard imports
-import os
-import io
-from   setuptools import find_packages
+# pylint: disable=E0602
 
-# imports - third-party imports
-try: # for pip >= 10
-    from pip._internal.req import parse_requirements
-except ImportError: # for pip <= 9.0.3
-    from pip.req import parse_requirements
+import sys
+import os.path as osp
 
-# Python 2
+from   setuptools import setup, find_packages
+
+import pip
+
 try:
-	FileNotFoundError
-except NameError:
-	FileNotFoundError = IOError
+    from pip._internal.req import parse_requirements # pip 10
+except ImportError:
+    from pip.req           import parse_requirements # pip 9
 
-basedir = os.path.dirname(__file__)
-srcpath = os.path.join(basedir, 'candis', '__attr__.py')
+# globals
+PACKAGE     = "candis"
+SRCDIR      = "src"
 
-with open(srcpath) as f:
-	code = f.read()
-	exec(code)
+def isdef(var):
+    return var in globals()
 
-def get_long_description(*filepaths):
-	for filepath in filepaths:
-		abspath = os.path.abspath(filepath)
+def read(path):
+    content = None
+    
+    with open(path) as f:
+        content = f.read()
 
-		if os.path.exists(abspath):
-			if os.path.isfile(abspath):
-				if os.path.getsize(abspath) > 0:
-					with io.open(abspath, mode = 'r', encoding = 'utf-8') as f:
-						content = f.read()
-			else:
-				raise ValueError('Not a file: {filepath}'.format(filepath = abspath))
-		else:
-			raise FileNotFoundError('No such file found: {filepath}'.format(filepath = abspath))
+    return content
 
-def get_dependencies(type_ = None, dirpath = 'requirements'):
-	abspath = dirpath if os.path.isabs(dirpath) else os.path.join(basedir, dirpath)
-	types   = [os.path.splitext(fname)[0] for fname in os.listdir(abspath)]
+def get_package_info():
+    attr = osp.join(SRCDIR, PACKAGE, "__attr__.py")
+    info = dict(__file__ = attr) # HACK
+    
+    with open(attr) as f:
+        content = f.read()
+        exec(content, info)
 
-	if not os.path.exists(abspath):
-		raise ValueError('Directory {directory} not found.'.format(directory = abspath))
-	elif not os.path.isdir(abspath):
-		raise ValueError('{directory} is not a directory.'.format(directory = abspath))
+    return info
 
-	if type_:
-		if type_ in types:
-			path         = os.path.join(abspath, '{type_}.txt'.format(type_ = type_))
-			dependencies = [str(d.req) for d in parse_requirements(path, session = 'meh')]
+def get_dependencies(type_ = None):
+    path         = osp.abspath("requirements{type_}.txt".format(
+        type_    = "-dev" if type_ == "development" else ""
+    ))
+    requirements = [str(ir.req) for ir in parse_requirements(path, session = "hack")]
+    
+    return requirements
 
-			return dependencies
-		else:
-			raise ValueError('Incorrect dependency type {type_}'.format(type_ = type_))
-	else:
-		dependencies = dict()
-		
-		for type_ in types:
-			dependencies[type_] = get_dependencies(type_)
-		
-		return dependencies
+PKGINFO    = get_package_info()
 
-package = dict(
-	name             = 'candis',
-	version          = __version__,
-	release          = __release__,
-	description      = 'A data mining suite for DNA Microarrays.',
-	long_description = get_long_description('README.md', 'LICENSE'),
-	homepage         = 'https://candis.readthedocs.io',
-	authors          = \
-	[
-		{ 'name': 'Achilles Rasquinha', 'email': 'achillesrasquinha@gmail.com' }
-	],
-	maintainers      = \
-	[
-		{ 'name': 'Achilles Rasquinha', 'email': 'achillesrasquinha@gmail.com' }
-	],
-	license          = 'GNU General Public License v3.0',
-	modules          = find_packages(exclude = ['test']),
-	test_modules     = find_packages(include = ['test']),
-	classifiers      = \
-	[
-
-	],
-	keywords         = \
-	[
-		'data', 'mining', 'suite', 'dna', 'microarray', 'bioinformatics'
-	],
-	# dependencies     = get_dependencies()
+setup(
+    name                 = PKGINFO["__name__"],
+    version              = PKGINFO["__version__"],
+    url                  = PKGINFO["__url__"],
+    author               = PKGINFO["__author__"],
+    author_email         = PKGINFO["__email__"],
+    description          = PKGINFO["__description__"],
+    long_description     = read("README.md"),
+    license              = PKGINFO["__license__"],
+    keywords             = " ".join(PKGINFO["__keywords__"]),
+    packages             = find_packages(where = SRCDIR),
+    package_dir          = { "": SRCDIR },
+    zip_safe             = False,
+    entry_points         = {
+        "console_scripts": [
+            "%s = %s.__main__:main" % (
+                PKGINFO["__command__"] if hasattr(PKGINFO, "__command__") else PKGINFO["__name__"],
+                PACKAGE
+            )
+        ]
+    },
+    {% endif %}
+    install_requires     = get_dependencies(type_ = "production"),
+    extras_require       = dict(
+        dev = get_dependencies(type_ = "development")
+    ),
+    include_package_data = True,
+    classifiers          = (
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: Console",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Programming Language :: Python :: Implementation :: PyPy"
+    )
 )

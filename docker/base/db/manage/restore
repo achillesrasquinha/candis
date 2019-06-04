@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -e
+
+basedir="$(dirname "${0}")"
+
+source "${basedir}/includes/constants"
+
+if [[ -z "${1}" ]]; then
+    echo "Backup filename required."
+    exit 1
+fi
+
+filepath="${1}"
+
+echo "Dropping DataBase "${POSTGRES_DB}"..."
+dropdb "${POSTGRES_DB}"
+
+echo "Creating DataBase "${POSTGRES_DB}" with owner "${POSTGRES_USER}"..."
+createdb "${POSTGRES_DB}" --owner "${POSTGRES_USER}"
+
+echo "Restoring "${filepath}" to DataBase "${POSTGRES_DB}" with owner "${POSTGRES_USER}"..."
+gunzip -c "${filepath}" | pg_restore -d "${POSTGRES_DB}" --no-owner --role "${POSTGRES_USER}" --verbose

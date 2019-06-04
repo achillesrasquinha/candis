@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -e
+
+function get_timestamp ( ) {
+    local format="${1:-"%Y%m%d%H%M%S"}"
+    echo $(date +$format)
+}

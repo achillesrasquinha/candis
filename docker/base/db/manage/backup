@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -e
+
+basedir="$(dirname "${0}")"
+
+source "${basedir}/includes/constants"
+source "${basedir}/includes/utils/time"
+
+filename="$(get_timestamp "%Y_%m_%d__%H_%M_%S").sql.gz"
+filepath="${PATH_BACKUPS}/${filename}"
+
+mkdir -p "${PATH_BACKUPS}"
+
+pg_dump -Fc -v | gzip > "${filepath}"
+
+echo "Backup created successfully at ${filepath}"
